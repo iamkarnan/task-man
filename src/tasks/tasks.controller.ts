@@ -10,6 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import {ValidateObjectID} from '../pipes/validate-object-id.pipe'
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -34,26 +35,17 @@ export class TasksController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Please enter a valid ID');
-    }
+  findOne(@Param('id', ValidateObjectID) id: string) {
     return this.tasksService.findOne(id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Please enter a valid ID');
-    }
+  update(@Param('id', ValidateObjectID) id: string, @Body() updateTaskDto: UpdateTaskDto) {
     return this.tasksService.update(id, updateTaskDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Please enter a valid ID');
-    }
+  async remove(@Param('id', ValidateObjectID) id: string) {
     await this.tasksService.remove(id);
     return {
       statusCode: HttpStatus.OK,
