@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
+import { Types } from 'mongoose';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -8,24 +19,13 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
-  create(@Body() createTaskDto: CreateTaskDto) {
-
-    try {
-      const createdData = this.tasksService.create(createTaskDto);
-
-      return {
-        statusCode: HttpStatus.CREATED,
-        message: "Task was created successfully",
-        data: createdData
-      }
-    } catch(error){
-      throw new HttpException({
-            status: HttpStatus.FORBIDDEN,
-            error: 'This is a custom message',
-          }, HttpStatus.FORBIDDEN, {
-            cause: error
-          });
-    }
+  async create(@Body() createTaskDto: CreateTaskDto) {
+    const createdData = await this.tasksService.create(createTaskDto);
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Task was created successfully',
+      data: createdData,
+    };
   }
 
   @Get()
@@ -35,16 +35,29 @@ export class TasksController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(+id);
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Please enter a valid ID');
+    }
+    return this.tasksService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.tasksService.update(+id, updateTaskDto);
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Please enter a valid ID');
+    }
+    return this.tasksService.update(id, updateTaskDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tasksService.remove(+id);
+  async remove(@Param('id') id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Please enter a valid ID');
+    }
+    await this.tasksService.remove(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Task deleted successfully',
+    };
   }
 }
